@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<meta charset="utf-8 /">
+		<link rel="stylesheet" href="css/index.css">
+	</head>
+
+	<body>
+		<canvas id="myCanvas" width=480 height="500"></canvas>
+		<script>
+			var canvas = document.getElementById("myCanvas");
+			var ctx = canvas.getContext("2d");
+
+			var blockColor = "green";
+			var padColor = "#0095DD";
+			var ballColor = "blue";
+
+			var x = canvas.width/2;
+			var y = canvas.height-30;
+			var dx = 2;
+			var dy = -2;
+			
+			var backSpeed = 0.3;
+			var randIMn = 1;
+			var randIMx = 10;
+			var randInt = 10;
+
+			var ballRadius = 10;
+			
+			var score = 0;
+
+			var padHeight = 10;
+			var padWidth = 100; //パッドの横の長さ
+			var padX = (canvas.width-padWidth)/2;
+			
+			var allowLoop = false; //全部クリアしてもループを許すか
+			
+			var brickRowCount = 3;
+			var brickColumnCount = 5;
+			var brickWidth = 75;
+			var brickHeight = 20;
+			var brickPadding = 10;
+			var brickOffsetTop = 30;
+			var brickOffsetLeft = 30;
+			
+			var bricks = [];
+				for(var c = 0; c < brickColumnCount; c++) {
+					bricks[c] = [];
+				for(var r = 0; r < brickRowCount; r++) {
+					bricks[c][r] = { x: 0, y: 0, status: 1};
+				}
+			}
+			
+			var rightPressed = false;
+			var leftPressed = false;
+
+			document.addEventListener("keydown", keyDownHandler, false);
+			document.addEventListener("keyup", keyUpHandler, false);
+			
+			function keyDownHandler(e) {
+				if(e.key == "Right" || e.key == "ArrowRight") {
+					rightPressed = true;
+				}
+				else if (e.key == "Left" || e.key == "ArrowLeft") {
+					leftPressed = true;
+				}
+			}
+
+			function keyUpHandler(e) {
+				if(e.key == "Right" || e.key == "ArrowRight") {
+					rightPressed = false;
+				}
+				else if(e.key == "Left" || e.key == "ArrowLeft") {
+					leftPressed = false;
+				}
+			}
+			
+			function collisionDetection() {
+				for(var c=0; c<brickColumnCount; c++) {
+					for(var r=0; r<brickRowCount; r++) {
+						var b = bricks[c][r];
+						if(b.status == 1) {
+							if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
+								dy = -dy;
+								b.status = 0;
+								score++;
+								if(score == brickRowCount*brickColumnCount && !allowLoop){
+									alert("YOU WIN, CONGRATURATIONS!");
+									document.location.reload();
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			function drawScore() {
+				ctx.font = "16px Arial";
+				ctx.fillStyle = "#0095DD";
+				ctx.fillText("Score: "+score+" Speed: "+backSpeed, 8, 20);
+			}
+
+			function drawBall()
+			{
+				ctx.beginPath();
+				ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+				ctx.fillStyle = ballColor;
+				ctx.fill();
+				ctx.closePath();
+			}
+			function drawPaddle() {
+				ctx.beginPath();
+				ctx.rect(padX, canvas.height-padHeight, padWidth, padHeight);
+				ctx.fillStyle = padColor;
+				ctx.fill();
+				ctx.closePath();
+			}
+			
+			function drawbricks() {
+				for(var c = 0; c < brickColumnCount; c++) {
+					for(var r = 0; r < brickRowCount; r++) {
+						if(bricks[c][r].status == 1) {
+							var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+							var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+							bricks[c][r].x = brickX;
+							bricks[c][r].y = brickY;
+							ctx.beginPath();
+							ctx.rect(brickX, brickY, brickWidth, brickHeight);
+							ctx.fillStyle = blockColor;
+							ctx.fill();
+							ctx.closePath();
+						}
+					}
+				}
+			}
+
+			function draw()
+			{
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				drawbricks();
+				drawBall();
+				drawPaddle();
+				collisionDetection();
+				drawScore();
+
+				if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
+					dx = -dx;
+				}
+				if(y + dy < ballRadius) {
+					dy = -dy;
+				}
+				if(y + dy > canvas.height-ballRadius) {
+					if(x > padX && x < padX + padWidth) {
+						dy = -dy-backSpeed;
+						randInt = Math.floor(Math.random() * (randIMx + 1 - randIMn)) + randIMn;
+						backSpeed = backSpeed + 0.001 * randInt;
+						if (0.4 < backSpeed){
+							backSpeed = 0.3;
+						}
+						//document.write(backSpeed + "<br>")
+					}
+					else {
+						alert("GAME OVER");
+						document.location.reload();
+						clearInterval(interval);
+					}
+				}
+
+				if(rightPressed && padX < canvas.width-padWidth) {
+					padX += 7;
+				}
+				else if(leftPressed && padX > 0) {
+					padX -= 7;
+				}
+				x += dx;
+				y += dy;
+			}
+
+			var interval = setInterval(draw, 10);
+		</script>
+	</body>
+</heml>
